@@ -4,38 +4,41 @@ namespace App\Http\Controllers;
 
 use App\Facades\Export;
 use App\Facades\Import;
+use App\Helpers\Utilities;
 use App\Http\Requests\CsvFileRequest;
 use Illuminate\Contracts\View\View;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Hash;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class MainController extends Controller
 {
+    use Utilities;
     public  function index(): View
     {
         return view('main.index');
     }
 
-    public function upload(CsvFileRequest $request)
+    /**
+     * Я не тестував цей екшин на вразливості(XSS, Injection). Якщо треба, то зроблю.
+     * @param CsvFileRequest $request
+     * @return RedirectResponse
+     */
+    public function upload(CsvFileRequest $request): RedirectResponse
     {
         $path = $request
             ->file('csv_file')
-            ->storeAs(
-                implode(
-                    '.',
-                    [
-                        bin2hex(Hash::make(time())), 'csv'
-                    ]
-                )
-            )
+            ->storeAs(implode('.', [$this->genFileName(), 'csv']))
         ;
 
-        var_dump(Import::import($path));
+        Import::import($path);
+
+        return redirect()->to(route('main.index'));
     }
 
     public function export() : StreamedResponse
     {
-        $filename = implode(".", [bin2hex(Hash::make(time()))]);
+        $filename = implode(".", [$this->genFileName()]);
         $response = Export::stream_export();
         $response->headers->set('Content-Type', 'text/csv');
         $response->headers->set('Content-Disposition', "attachment; filename=\"{$filename}\"");
@@ -43,5 +46,6 @@ class MainController extends Controller
         return $response;
 
     }
+
     //if im will be having fluent time, im implement background_export action.
 }

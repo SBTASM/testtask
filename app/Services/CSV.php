@@ -4,11 +4,15 @@ namespace App\Services;
 
 use App\Contracts\Export;
 use App\Contracts\Import;
+use App\Helpers\Utilities;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class CSV implements Import, Export {
+
+    use Utilities;
+
     const CHUNK_SIZE = 4096;
 
     function import(string $file): bool
@@ -28,9 +32,6 @@ class CSV implements Import, Export {
 
                 if($this->isAllowedRow($row) === false){ continue; }
                 $batch[] = $row;
-                /**
-                 *
-                 */
 
                 if ($line % self::CHUNK_SIZE === 0) {
                     DB::table('user_info')->insert($batch);
@@ -45,7 +46,6 @@ class CSV implements Import, Export {
         }catch (\Exception $e){
             DB::rollBack();
             //Log and show error, m.b. use custom exception.
-//            throw new \Exception($e->getMessage());
             return false;
         }
 
@@ -69,7 +69,7 @@ class CSV implements Import, Export {
      */
     function stream_export(): StreamedResponse
     {
-        $stream = new StreamedResponse(function () {
+        return new StreamedResponse(function () {
             $handle = fopen('php://output', 'w');
             fputcsv($handle, [
                 'id',
@@ -90,7 +90,7 @@ class CSV implements Import, Export {
                             $user->id,
                             $user->email,
                             $user->firstname,
-                            $user->last_name,
+                            $user->lastname,
                             $user->age,
                             $user->country,
                             $user->city,
@@ -101,30 +101,5 @@ class CSV implements Import, Export {
 
             fclose($handle);
         });
-
-        return $stream;
-    }
-
-    /**
-     * @param array $row
-     * @return bool
-     *
-     * Дані повинні валідуватися при імпорті та:
-     * заборонені поштові домени: mail.ru, ya.ru
-     * дозвонені країни: ua, uk, us
-     */
-    protected function isAllowedRow(array $row) : bool
-    {
-        $notAllowedMailDomains = ['mail.ru', 'ya.ru']; //Hardcoded data!!!
-        $allowedCountries = ['ua', 'uk', 'us']; //Hardcoded data!!!
-
-        $email  = mb_strtolower($row['email']);
-        $country = mb_strtolower($row['country']);
-
-        foreach ($notAllowedMailDomains as $domain) {
-            if(mb_strstr($email, $domain) !== false) { return  false; }
-        }
-
-        return in_array($country, $allowedCountries);
     }
 }

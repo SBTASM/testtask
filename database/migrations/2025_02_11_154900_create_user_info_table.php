@@ -32,7 +32,7 @@ return new class extends Migration
             $table->string('city');
             $table->date('date');
 
-            $table->timestamps();
+//            $table->timestamps();
         });
     }
 

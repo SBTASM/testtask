@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Helpers\Utilities;
 use App\Services\CSV;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
@@ -13,6 +14,7 @@ use Illuminate\Validation\Validator;
 
 class CsvFileRequest extends FormRequest
 {
+    use Utilities;
     /**
      * Determine if the user is authorized to make this request.
      */
@@ -58,7 +60,7 @@ class CsvFileRequest extends FormRequest
      *
      * Взагалі, по хорошому, ось тут треба фільтрувати країни та інші данні(створивши кастомний валідатор, або правило).
      * Але я не знаю, скільки ресурсу буде у скрита, та не знаю чи є критичним час виконання і що там за файлова система. (задача у нас абстрактна)
-     * Так що цей функціонал перекочує в сервіс імпорта. @see CSV::import(),CSV::isAllowedRow(), він один відпрацює швидше
+     * Так що цей функціонал перекочує в сервіс імпорта. @see CSV::import(),Utilities::isAllowedRow(), він один відпрацює швидше
      */
     private function handleCustomCsvRequest(Validator $validator, UploadedFile $file): void
     {

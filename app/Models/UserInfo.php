@@ -35,4 +35,6 @@ class UserInfo extends Model
         'city',
         'date'
     ];
+
+    public $timestamps = false;
 }
